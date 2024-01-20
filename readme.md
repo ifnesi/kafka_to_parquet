@@ -153,7 +153,7 @@ Confluent Control Center -> http://localhost:9021
 2024-01-20 21:39:07.481 [INFO]: Received message #75 [purchase]: {"quantity": 7, "sku": "sku_5", "price": 20.653133419785075, "storeid": "Store_2"}
 2024-01-20 21:39:07.495 [INFO]: Received message #76 [purchase]: {"quantity": 6, "sku": "sku_4", "price": 5.28553071530288, "storeid": "Store_2"}
 ^C2024-01-20 21:39:07.511 [WARNING]: CTRL-C pressed by user!
-2024-01-20 21:39:07.511 [INFO]: Closing consumer parquet-demo-01 (parquet-demo)
+2024-01-20 21:39:07.511 [INFO]: Closing consumer ID parquet-demo-01 (Group parquet-demo)
 2024-01-20 21:39:07.511 [INFO]: Adding 77 record(s) into the database...
 2024-01-20 21:39:07.523 [INFO]: Exporting data to: data/database_1705786747...
 2024-01-20 21:39:07.525 [INFO]: Completed!

@@ -121,7 +121,7 @@ def main(args):
 
         finally:
             logging.info(
-                f"Closing consumer {conf_confluent['client.id']} ({conf_confluent['group.id']})"
+                f"Closing consumer ID {conf_confluent['client.id']} (Group {conf_confluent['group.id']})"
             )
             if (num_records > 0):
                 utils.insert_and_export(conn, utils.DUCKDB_DATA_FOLDER, num_records, schema_field_names, records)
