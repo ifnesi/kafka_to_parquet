@@ -18,6 +18,9 @@ Parquet files will be saved under the folder `data/` as `database_EPOCH/`.
   - datagen_stock_trade: e.g. `{"side": "BUY", "quantity": 4, "symbol": "STK_9", "price": 8.187322875120408, "account": "Account_63", "userid": "User_60"}`
   - datagen_purchase: e.g. `{"quantity": 8, "sku": "sku_3", "price": 53.5951224569137, "storeid": "Store_0"}`
 - Python consumer `kafka_to_parquet.py` will batch events (in lots of 200 by default) and dump to Parquet files (one table per topic)
+  - Table Schemas:
+    - stock_trade: `CREATE TABLE stock_trade(__ts TIMESTAMP, side VARCHAR, quantity INTEGER, symbol VARCHAR, price DOUBLE, account VARCHAR, userid VARCHAR);`
+    - purchase: `CREATE TABLE purchase(__ts TIMESTAMP, quantity INTEGER, sku VARCHAR, price DOUBLE, storeid VARCHAR);`
 - Python script `data_analytics.py` will load the Parquet files and generate analytics dashboard
 
 ![image](static/docs/demo_diagram.png)
