@@ -78,6 +78,38 @@ def insert_and_export(conn, folder, num_records, schema_field_names, records, ch
         empty_table(conn, topic)
 
 
+def get_latest_stock(conn, table_name, limit=30):
+    return conn.execute(f"""
+        SELECT
+            __ts,
+            __key,
+            symbol,
+            side,
+            account,
+            userid,
+            quantity,
+            price
+        FROM '{table_name}'
+        ORDER BY
+            __ts DESC
+        LIMIT {limit};""")
+
+
+def get_latest_purchase(conn, table_name, limit=30):
+    return conn.execute(f"""
+        SELECT
+            __ts,
+            __key,
+            storeid,
+            sku,
+            quantity,
+            price
+        FROM '{table_name}'
+        ORDER BY
+            __ts DESC
+        LIMIT {limit};""")
+
+
 def aggregate_by_symbol_side(conn, table_name):
     return conn.execute(f"""
         SELECT

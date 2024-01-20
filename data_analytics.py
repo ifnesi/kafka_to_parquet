@@ -50,8 +50,9 @@ def run_analytics():
             if table_print:
                 if DUCKDB_STOCK_TABLE in tables_created:
                     logging.info(f"Updating table '{DUCKDB_STOCK_TABLE}'...")
-                    data = utils.aggregate_by_symbol_side(conn, DUCKDB_STOCK_TABLE)
 
+                    # Aggregated data
+                    data = utils.aggregate_by_symbol_side(conn, DUCKDB_STOCK_TABLE)
                     data_table_stock = ""
                     for row in data.fetchall():
                         if row[1] == '~~~~':
@@ -68,13 +69,31 @@ def run_analytics():
                         data_table_stock += f"<{tds} class='text-right {'text-danger' if row[2]<0 else ''}'>{row[2]:,.2f}</{tde}>"
                         data_table_stock += f"<{tds} class='text-right {'text-danger' if row[4]<0 else ''}'>{row[4]:,.2f}</{tde}>"
                         data_table_stock += "</tr>"
+
+                    # Latest
+                    data = utils.get_latest_stock(conn, DUCKDB_STOCK_TABLE)
+                    data_table_stock_latest = ""
+                    for row in data.fetchall():
+                        data_table_stock_latest += "<tr>"
+                        data_table_stock_latest += f"<td>{row[0].strftime('%Y-%m-%d %H:%M:%S.%f')[:23]}</td>"
+                        data_table_stock_latest += f"<td>{row[1]}</td>"
+                        data_table_stock_latest += f"<td>{row[2]}</td>"
+                        data_table_stock_latest += f"<td>{row[3]}</td>"
+                        data_table_stock_latest += f"<td>{row[4]}</td>"
+                        data_table_stock_latest += f"<td>{row[5]}</td>"
+                        data_table_stock_latest += f"<td class='text-right'>{row[6]:,.0f}</td>"
+                        data_table_stock_latest += f"<td class='text-right'>{row[7]:,.2f}</td>"
+                        data_table_stock_latest += "</tr>"
+
                 else:
                     data_table_stock = ""
+                    data_table_stock_latest = ""
 
                 if DUCKDB_PURCHASE_TABLE in tables_created:
                     logging.info(f"Updating table '{DUCKDB_PURCHASE_TABLE}'...")
                     data = utils.aggregate_by_sku(conn, DUCKDB_PURCHASE_TABLE)
 
+                    # Aggregated data
                     data_table_purchase = ""
                     for row in data.fetchall():
                         if row[1] == '~~~~':
@@ -91,8 +110,23 @@ def run_analytics():
                         data_table_purchase += f"<{tds} class='text-right'>{row[3]:,.2f}</{tde}>"
                         data_table_purchase += f"<{tds} class='text-right'>{row[4]:,.2f}</{tde}>"
                         data_table_purchase += "</tr>"
+
+
+                    # Latest
+                    data = utils.get_latest_purchase(conn, DUCKDB_PURCHASE_TABLE)
+                    data_table_purchase_latest = ""
+                    for row in data.fetchall():
+                        data_table_purchase_latest += "<tr>"
+                        data_table_purchase_latest += f"<td>{row[0].strftime('%Y-%m-%d %H:%M:%S.%f')[:23]}</td>"
+                        data_table_purchase_latest += f"<td>{row[1]}</td>"
+                        data_table_purchase_latest += f"<td>{row[2]}</td>"
+                        data_table_purchase_latest += f"<td>{row[3]}</td>"
+                        data_table_purchase_latest += f"<td class='text-right'>{row[4]:,.0f}</td>"
+                        data_table_purchase_latest += f"<td class='text-right'>{row[5]:,.2f}</td>"
+                        data_table_purchase_latest += "</tr>"
                 else:
                     data_table_purchase = ""
+                    data_table_purchase_latest = ""
 
                 utils.create_html_file(
                     utils.HTML_TEMPLATE_ANALYTICS,
@@ -100,6 +134,8 @@ def run_analytics():
                     {
                         "data_table_stock": data_table_stock,
                         "data_table_purchase": data_table_purchase,
+                        "data_table_stock_latest": data_table_stock_latest,
+                        "data_table_purchase_latest": data_table_purchase_latest,
                     }
                 )
 
