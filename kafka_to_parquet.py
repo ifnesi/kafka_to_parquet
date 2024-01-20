@@ -137,11 +137,11 @@ if __name__ == "__main__":
     ]
     parser.add_argument(
         "--topics",
-        help="List of topic names (default is 'stock_trade')",
+        help="List of topic names",
         dest="topic",
         type=str,
         nargs="+",
-        default=["stock_trade"],
+        required=True,
     )
     parser.add_argument(
         "--offset-reset",
@@ -190,21 +190,21 @@ if __name__ == "__main__":
         "--dump-records",
         dest="dump_records",
         type=int,
-        help="Number os records to create a new Parquet file",
+        help="Number os records to create a new Parquet file (default is 200)",
         default=200,
     )
     parser.add_argument(
         "--dump-timeout",
         dest="dump_timeout",
         type=int,
-        help="Record timeout to create a new Parquet file (seconds)",
+        help="Record timeout to create a new Parquet file (in seconds, default is 60)",
         default=60,
     )
     parser.add_argument(
         "-d",
         "--delete",
         dest="delete",
-        help="Delete current data",
+        help="Delete all parquet files under folder 'data/'",
         action="store_true",
     )
 

@@ -1,17 +1,19 @@
 ![image](static/docs/confluent-logo-300-2.png)
 
 # Kafka to Parquet
-
 This is a very basic and rudimentary python Kafka consumer to batch topic data (Avro serialised) and dump to [Apache Parquet](https://parquet.apache.org/) files (one table per topic).
 
 Parquet files will be saved under the folder `data/` as `database_EPOCH/`.
 
-## Requirements:
-- curl
-- DuckDB
-- Docker Desktop
-- Python 3.8+
-- Install python requirements (`python3 -m pip install -r requirements.txt`)
+## Requirements
+- [curl](https://curl.se/)
+- [DuckDB](https://duckdb.org/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Python 3.8+](https://www.python.org/)
+- Create Python virtual environment: `python3 -m venv .venv`
+- Activate Python virtual environment: `source .venv/bin/activate`
+- Install python requirements: `python3 -m pip install -r requirements.txt`
+- Deactivate Python virtual environment: `deactivate`
 
 ## Demo Diagram
 - Data will be produced by two [DataGen source connectors](https://docs.confluent.io/kafka-connectors/datagen/current/overview.html):
@@ -25,7 +27,45 @@ Parquet files will be saved under the folder `data/` as `database_EPOCH/`.
 
 ![image](static/docs/demo_diagram.png)
 
-# Running the demo
+## Kafka to Parquet Python script
+```
+usage: kafka_to_parquet.py [-h]
+                           [--topics TOPIC [TOPIC ...]]
+                           [--offset-reset {earliest,latest}]
+                           [--config-filename CONFIG_FILENAME]
+                           [--kafka-section KAFKA_SECTION]
+                           [--sr-section SR_SECTION]
+                           [--group-id GROUP_ID]
+                           [--client-id CLIENT_ID]
+                           [--dump-records DUMP_RECORDS]
+                           [--dump-timeout DUMP_TIMEOUT]
+                           [-d | --delete]
+
+Python Kafka to Parquet (Avro serialised topics)
+
+options:
+  -h, --help            show this help message and exit
+  --topics TOPIC [TOPIC ...]
+                        List of topic names
+  --offset-reset {earliest,latest}
+                        Set auto.offset.reset (default: earliest)
+  --config-filename CONFIG_FILENAME
+                        Select config filename for additional configuration, such as credentials (files must be inside the folder config/)
+  --kafka-section KAFKA_SECTION
+                        Section in the config file related to the Kafka cluster (default is 'kafka')
+  --sr-section SR_SECTION
+                        Section in the config file related to the Schema Registry (default is 'schema-registry')
+  --group-id GROUP_ID   Consumer's Group ID (default is 'parquet-demo')
+  --client-id CLIENT_ID
+                        Consumer's Client ID (default is 'parquet-demo-01')
+  --dump-records DUMP_RECORDS
+                        Number os records to create a new Parquet file (default is 200)
+  --dump-timeout DUMP_TIMEOUT
+                        Record timeout to create a new Parquet file (in seconds, default is 60)
+  -d, --delete          Delete all parquet files under folder 'data/' 
+```
+
+## Running the demo
 To automatically setup the demo, run `./demo_start.sh`, it should take less than 2 minutes to have everything up and running.
 ```
  ✔ Network kafka_to_parquet_default  Created
@@ -162,7 +202,7 @@ Confluent Control Center -> http://localhost:9021
 An HTML dashboard (`analytics.html`) will be created and it should be automatically open once generated (that report will refresh itself every second):
 ![image](static/docs/analytics_dashboard.png)
 
-# Stopping the demo
+## Stopping the demo
 To stop the demo, please run `./demo_stop.sh`.
 ```
  ✔ Container connect                 Removed
@@ -173,7 +213,7 @@ To stop the demo, please run `./demo_stop.sh`.
  ✔ Network kafka_to_parquet_default  Removed 
 ```
 
-# External References
+## External References
 Check out [Confluent's Developer portal](https://developer.confluent.io), it has free courses, documents, articles, blogs, podcasts and so many more content to get you up and running with a fully managed Apache Kafka service.
 
 Disclaimer: I work for Confluent :wink:
