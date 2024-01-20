@@ -62,7 +62,7 @@ def main(args):
             consumer.subscribe(args.topic)
 
             logging.info(
-                f"Started consumer {conf_confluent['client.id']} ({conf_confluent['group.id']}) on topic(s): {', '.join(args.topic)}'"
+                f"Started consumer ID {conf_confluent['client.id']} (Group {conf_confluent['group.id']}) on topic(s): {', '.join(args.topic)}"
             )
 
             records = dict()
@@ -94,14 +94,15 @@ def main(args):
                                 utils.create_db_table(conn, topic, table_schema)
                                 utils.empty_table(conn, topic)
 
+                            logging.info(f"Received message #{num_records} [{topic}]: {json.dumps(deserialised_record)}")
+
                             _records = list()
                             deserialised_record["__ts"] = datetime.datetime.fromtimestamp(msg.timestamp()[1] / 1000).isoformat()
+                            deserialised_record["__key"] = "" if msg.key() is None else msg.key().decode("utf-8")
                             for field in schema_field_names[topic]:
                                 _records.append(deserialised_record[field])
                             records[topic].append(_records)
                             num_records += 1
-                            last_record = time.time()
-                            logging.info(f"Received message #{num_records} [{topic}]: {json.dumps(deserialised_record)}")
 
                     # Dump to DB and save as Parquet
                     if (num_records >= args.dump_records) or (num_records > 0 and (time.time() - last_record) > args.dump_timeout):

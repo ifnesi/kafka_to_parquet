@@ -32,8 +32,8 @@ def map_field(field_type):
 
 
 def generate_table_schema(avro_schema):
-    field_names = ["__ts"]
-    table_schema = ["__ts TIMESTAMP"]
+    field_names = ["__ts", "__key"]
+    table_schema = ["__ts TIMESTAMP", "__key VARCHAR"]
     for field in avro_schema.get("fields", list()):
         field_name = field.get("name")
         field_type = field.get("type")
