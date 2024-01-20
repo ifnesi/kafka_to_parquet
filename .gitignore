@@ -1,0 +1,12 @@
+.venv
+.vscode/
+.DS_Store
+*.pyc
+__pycache__/
+data/database_*
+!data/
+config/*
+!config/example.ini
+!config/localhost.ini
+analytics.html
+notes.txt
