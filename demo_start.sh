@@ -59,13 +59,13 @@ echo ""
 echo ""
 echo "Datagen connector status (Stock Trading)"
 curl -s http://localhost:8083/connectors/datagen_stock_trade/status
+sleep 1
 
 echo ""
 echo ""
 echo "Datagen connector status (Stock Trading)"
 curl -s http://localhost:8083/connectors/datagen_purchase/status
-
-sleep 2
+sleep 1
 
 echo ""
 echo ""
