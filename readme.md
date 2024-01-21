@@ -199,7 +199,7 @@ Confluent Control Center -> http://localhost:9021
 2024-01-20 21:39:07.525 [INFO]: Completed!
 ```
 
-An HTML dashboard (`analytics.html`) will be created and it should be automatically open once generated (that report will refresh itself every second):
+An HTML dashboard (`analytics.html`) will be created and it should be automatically open once generated (that report will refresh itself every 3 seconds):
 ![image](static/docs/analytics_dashboard.png)
 
 ## Stopping the demo
