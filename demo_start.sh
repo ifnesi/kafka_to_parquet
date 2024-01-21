@@ -63,7 +63,7 @@ sleep 1
 
 echo ""
 echo ""
-echo "Datagen connector status (Stock Trading)"
+echo "Datagen connector status (Purchase)"
 curl -s http://localhost:8083/connectors/datagen_purchase/status
 sleep 1
 
