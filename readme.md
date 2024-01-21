@@ -212,12 +212,12 @@ To stop the demo, please run `./demo_stop.sh`.
  ✔ Container zookeeper               Removed
  ✔ Network kafka_to_parquet_default  Removed 
 
+Parquet data:
  16K    data//database_1705869645
  16K    data//database_1705869674
 144K    data/
 
 --> Delete all parquet data (y/n)? y
-
 data/database_1705869645/schema.sql
 data/database_1705869645/purchase.parquet
 data/database_1705869645/load.sql
