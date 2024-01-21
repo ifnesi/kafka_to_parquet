@@ -26,11 +26,19 @@ def main(args):
     )
 
     kconfig = ConfigParser()
-    kconfig.read(os.path.join(utils.FOLDER_CONFIG, args.config_filename))
+    kconfig.read(
+        os.path.join(
+            utils.FOLDER_CONFIG,
+            args.config_filename,
+        )
+    )
 
-    # Delete data if required
+    # Delete data if required (-d or --delete)
     if args.delete:
-        for root, dirs, files in os.walk(utils.DUCKDB_DATA_FOLDER, topdown=False):
+        for root, dirs, files in os.walk(
+            utils.DUCKDB_DATA_FOLDER,
+            topdown=False,
+        ):
             for name in files:
                 if name != ".gitkeep":
                     os.remove(os.path.join(root, name))
@@ -53,6 +61,8 @@ def main(args):
     # Configure SR client
     sr_conf = dict(kconfig["schema-registry"])
     sr_client = SchemaRegistryClient(sr_conf)
+
+    # Avro deserialiser object
     avro_deserializer = AvroDeserializer(
         sr_client,
     )
@@ -72,11 +82,14 @@ def main(args):
             while True:
                 try:
                     msg = consumer.poll(timeout=0.25)
+
                     if msg is not None:
                         if msg.error():
                             raise KafkaException(msg.error())
+
                         else:
                             topic = msg.topic()
+  
                             # Avro deserialise the message
                             value = msg.value()
                             deserialised_record = avro_deserializer(
@@ -86,27 +99,54 @@ def main(args):
                                     MessageField.VALUE,
                                 ),
                             )
+
                             if topic not in records:
                                 records[topic] = list()
-                                # Create table if needed
+                                # Create DuckDB table if needed
                                 schema_id = int.from_bytes(value[1:5], "big")
-                                schema_field_names[topic], table_schema = utils.generate_table_schema(json.loads(sr_client._cache.schema_id_index[schema_id].schema_str))
+                                (
+                                    schema_field_names[topic],
+                                    table_schema,
+                                ) = utils.generate_table_schema(
+                                    json.loads(
+                                        sr_client._cache.schema_id_index[
+                                            schema_id
+                                        ].schema_str
+                                    )
+                                )
                                 utils.create_db_table(conn, topic, table_schema)
                                 utils.empty_table(conn, topic)
 
-                            logging.info(f"Received message #{num_records} [{topic}]: {json.dumps(deserialised_record)}")
+                            logging.info(
+                                f"[{topic}] Received message #{num_records}: {json.dumps(deserialised_record)}"
+                            )
 
                             _records = list()
-                            deserialised_record["__ts"] = datetime.datetime.fromtimestamp(msg.timestamp()[1] / 1000).isoformat()
-                            deserialised_record["__key"] = "" if msg.key() is None else msg.key().decode("utf-8")
+                            deserialised_record[
+                                "__ts"
+                            ] = datetime.datetime.fromtimestamp(
+                                msg.timestamp()[1] / 1000
+                            ).isoformat()
+                            deserialised_record["__key"] = (
+                                "" if msg.key() is None else msg.key().decode("utf-8")
+                            )
                             for field in schema_field_names[topic]:
                                 _records.append(deserialised_record[field])
                             records[topic].append(_records)
                             num_records += 1
 
                     # Dump to DB and save as Parquet
-                    if (num_records >= args.dump_records) or (num_records > 0 and (time.time() - last_record) > args.dump_timeout):
-                        utils.insert_and_export(conn, utils.DUCKDB_DATA_FOLDER, num_records, schema_field_names, records)
+                    if (num_records >= args.dump_records) or (
+                        num_records > 0
+                        and (time.time() - last_record) > args.dump_timeout
+                    ):
+                        utils.insert_and_export(
+                            conn,
+                            utils.DUCKDB_DATA_FOLDER,
+                            num_records,
+                            schema_field_names,
+                            records,
+                        )
                         consumer.commit(asynchronous=False)
                         num_records = 0
                         last_record = time.time()
@@ -123,14 +163,22 @@ def main(args):
             logging.info(
                 f"Closing consumer ID {conf_confluent['client.id']} (Group {conf_confluent['group.id']})"
             )
-            if (num_records > 0):
-                utils.insert_and_export(conn, utils.DUCKDB_DATA_FOLDER, num_records, schema_field_names, records)
+            if num_records > 0:
+                utils.insert_and_export(
+                    conn,
+                    utils.DUCKDB_DATA_FOLDER,
+                    num_records,
+                    schema_field_names,
+                    records,
+                )
                 consumer.commit(asynchronous=False)
             consumer.close()
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Python Kafka to Parquet (Avro serialised topics)")
+    parser = argparse.ArgumentParser(
+        description="Python Kafka to Parquet (Avro serialised topics)"
+    )
     OFFSET_RESET = [
         "earliest",
         "latest",

@@ -20,6 +20,7 @@ FIELD_TYPE_MAPPING = {
     "string": "VARCHAR",
 }
 
+
 def create_html_file(template, file_name, context):
     with open(template, "r") as f:
         jinja_template = Template(f.read())
@@ -54,32 +55,73 @@ def generate_table_schema(avro_schema):
 def create_db_table(conn, table_name, table_schema):
     conn.sql(f"""CREATE TABLE IF NOT EXISTS '{table_name}' ({table_schema});""")
 
+
 def empty_table(conn, table_name):
     conn.sql(f"""DELETE FROM '{table_name}';""")
 
 
-def insert_and_export(conn, folder, num_records, schema_field_names, records, chunks=25):
+def insert_and_export(
+    conn, folder, num_records, schema_field_names, records, chunks=25
+):
     # Inserting records
     logging.info(f"Adding {num_records} record(s) into the database...")
     for topic, rows in records.items():
         field_names = schema_field_names[topic]
         for i in range(0, len(rows), chunks):
-            conn.executemany(f"""INSERT INTO '{topic}' ({','.join(field_names)}) VALUES ({('?,'*len(field_names))[:-1]});""", records[topic][i:i + chunks])
+            conn.executemany(
+                f"""INSERT INTO '{topic}' ({','.join(field_names)}) VALUES ({('?,'*len(field_names))[:-1]});""",
+                records[topic][i : i + chunks],
+            )
 
     # Exporting to Parquet
     file_name = f"database_{int(time.time())}"
     full_file_name = os.path.join(folder, file_name)
     logging.info(f"Exporting data to: {full_file_name}...")
-    conn.sql(f"""EXPORT DATABASE '{full_file_name}' (FORMAT PARQUET, COMPRESSION ZSTD, ROW_GROUP_SIZE 100000);""")
+    conn.sql(
+        f"""EXPORT DATABASE '{full_file_name}' (FORMAT PARQUET, COMPRESSION ZSTD, ROW_GROUP_SIZE 100000);"""
+    )
     logging.info("Completed!")
-    
+
     # Emptying table
     for topic in records.keys():
         empty_table(conn, topic)
 
+def get_piechart_data_stock(conn, table_name):
+    return conn.execute(f"""
+        SELECT
+            symbol,
+            SUM(CASE WHEN side = 'BUY' THEN quantity * price END) AS buy,
+            SUM(CASE WHEN side = 'SELL' THEN quantity * price END) AS sell
+        FROM '{table_name}'
+        GROUP BY
+            symbol
+        ORDER BY
+            symbol""")
+
+
+def get_piechart_data_store(conn, table_name):
+    return conn.execute(f"""
+        SELECT
+            storeid,
+            SUM(CASE WHEN sku = 'sku_0' THEN quantity * price END),
+            SUM(CASE WHEN sku = 'sku_1' THEN quantity * price END),
+            SUM(CASE WHEN sku = 'sku_2' THEN quantity * price END),
+            SUM(CASE WHEN sku = 'sku_3' THEN quantity * price END),
+            SUM(CASE WHEN sku = 'sku_4' THEN quantity * price END),
+            SUM(CASE WHEN sku = 'sku_5' THEN quantity * price END),
+            SUM(CASE WHEN sku = 'sku_6' THEN quantity * price END),
+            SUM(CASE WHEN sku = 'sku_7' THEN quantity * price END),
+            SUM(CASE WHEN sku = 'sku_8' THEN quantity * price END)
+        FROM '{table_name}'
+        GROUP BY
+            storeid
+        ORDER BY
+            storeid""")
+
 
 def get_latest_stock(conn, table_name, limit=30):
-    return conn.execute(f"""
+    return conn.execute(
+        f"""
         SELECT
             __ts,
             __key,
@@ -92,11 +134,13 @@ def get_latest_stock(conn, table_name, limit=30):
         FROM '{table_name}'
         ORDER BY
             __ts DESC
-        LIMIT {limit};""")
+        LIMIT {limit};"""
+    )
 
 
 def get_latest_purchase(conn, table_name, limit=30):
-    return conn.execute(f"""
+    return conn.execute(
+        f"""
         SELECT
             __ts,
             __key,
@@ -107,11 +151,13 @@ def get_latest_purchase(conn, table_name, limit=30):
         FROM '{table_name}'
         ORDER BY
             __ts DESC
-        LIMIT {limit};""")
+        LIMIT {limit};"""
+    )
 
 
 def aggregate_by_symbol_side(conn, table_name):
-    return conn.execute(f"""
+    return conn.execute(
+        f"""
         SELECT
             symbol,
             side,
@@ -133,11 +179,13 @@ def aggregate_by_symbol_side(conn, table_name):
         GROUP BY
             symbol, '~~~~'
         ORDER BY
-            symbol, side;""")
+            symbol, side;"""
+    )
 
 
 def aggregate_by_sku(conn, table_name):
-    return conn.execute(f"""
+    return conn.execute(
+        f"""
         SELECT
             storeid,
             sku,
@@ -159,4 +207,5 @@ def aggregate_by_sku(conn, table_name):
         GROUP BY
             storeid, '~~~~'
         ORDER BY
-            storeid, sku;""")
+            storeid, sku;"""
+    )
