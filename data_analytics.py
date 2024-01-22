@@ -38,42 +38,37 @@ def run_analytics():
     )
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-    folders_processed = set()
-    tables_created = list()
+    parquet_files_processed = set()
     table_print = False
     file_open = False
+    tables_created = list()
     with duckdb.connect() as conn:
         while True:
-            folders = (
-                set(glob.glob(os.path.join(utils.DUCKDB_DATA_FOLDER, "*")))
-                - folders_processed
+            parquet_files = (
+                set(glob.glob(utils.DUCKDB_DATA_FOLDER_PATTERN))
+                - parquet_files_processed
             )
-
-            for folder in sorted(folders):
+            if parquet_files:
                 table_print = True
-                logging.info(f"Processing folder '{folder}'...")
-
-                schema_file = os.path.join(folder, "schema.sql")
-                if os.path.exists(schema_file):
-                    with open(schema_file) as f:
-                        for line in f:
-                            if line.strip():
-                                table_name = re.findall(
-                                    "CREATE TABLE '*(.*?)'*\s*\(", line
-                                )
-                                if table_name:
-                                    table_name = table_name[0]
-                                    if table_name not in tables_created:
-                                        conn.execute(line)
-                                        tables_created.append(table_name)
-
-                load_file = os.path.join(folder, "load.sql")
-                if len(tables_created) > 0 and os.path.exists(load_file):
-                    with open(load_file) as f:
-                        for line in f:
-                            if line.strip():
-                                conn.execute(line)
-                    folders_processed.add(folder)
+                tables_to_process = set(
+                    re.findall(
+                        f"{utils.DUCKDB_DATA_FOLDER_BASE}.+/(.*)\.parquet", file
+                    )[0]
+                    for file in parquet_files
+                )
+                for table in tables_to_process:
+                    logging.info(f"Processing table '{table}'...")
+                    files = [t for t in parquet_files if t.endswith(f"{table}.parquet")]
+                    if table in tables_created:
+                        conn.execute(
+                            f"INSERT INTO {table} SELECT * FROM read_parquet({json.dumps(files)})"
+                        )
+                    else:
+                        tables_created.append(table)
+                        conn.execute(
+                            f"CREATE TABLE {table} AS SELECT * FROM read_parquet({json.dumps(files)})"
+                        )
+                    parquet_files_processed.update(files)
 
             if table_print:
                 if DUCKDB_STOCK_TABLE in tables_created:
@@ -121,7 +116,7 @@ def run_analytics():
                         )
                         data_table_stock_latest += "</tr>"
 
-                    # Pie chart
+                    # Bar chart
                     array_data_stock = json.dumps(
                         [["Symbol", "Buy", "Sell"]]
                         + list(
@@ -132,10 +127,14 @@ def run_analytics():
                         )
                     )
 
+                    # Count
+                    stock_records = f"{utils.count_table(conn, DUCKDB_STOCK_TABLE).fetchall()[0][0]:,.0f}"
+
                 else:
                     data_table_stock = ""
                     data_table_stock_latest = ""
                     array_data_stock = ""
+                    stock_records = 0
 
                 if DUCKDB_PURCHASE_TABLE in tables_created:
                     logging.info(f"Updating table '{DUCKDB_PURCHASE_TABLE}'...")
@@ -186,7 +185,7 @@ def run_analytics():
                         )
                         data_table_purchase_latest += "</tr>"
 
-                    # Pie chart
+                    # Bar chart
                     array_data_store = json.dumps(
                         [
                             [
@@ -210,10 +209,14 @@ def run_analytics():
                         )
                     )
 
+                    # Count
+                    purchase_records = f"{utils.count_table(conn, DUCKDB_PURCHASE_TABLE).fetchall()[0][0]:,.0f}"
+
                 else:
                     data_table_purchase = ""
                     data_table_purchase_latest = ""
                     array_data_store = ""
+                    purchase_records = 0
 
                 utils.create_html_file(
                     utils.HTML_TEMPLATE_ANALYTICS,
@@ -225,6 +228,8 @@ def run_analytics():
                         "data_table_purchase_latest": data_table_purchase_latest,
                         "array_data_stock": array_data_stock,
                         "array_data_store": array_data_store,
+                        "stock_records": stock_records,
+                        "purchase_records": purchase_records,
                     },
                 )
 
