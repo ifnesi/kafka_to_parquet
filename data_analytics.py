@@ -18,24 +18,25 @@ DUCKDB_STOCK_TABLE = "stock_trade"
 DUCKDB_PURCHASE_TABLE = "purchase"
 
 
-class quietServer(http.server.SimpleHTTPRequestHandler):
+class SimpleHTTPRequestHandlerNoLogs(http.server.SimpleHTTPRequestHandler):
+    # by pass webserver logs
     def log_message(self, format, *args):
         pass
 
+
 def run_analytics():
-    # Start local web server
+    # Start local web server as a thread
+    ANALYTICS_ADDRESS = f"http://{utils.LOCALWEB_HOST}:{utils.LOCALWEB_PORT}"
+    logging.info(f"Starting WebServer thread ({ANALYTICS_ADDRESS})")
     with open(utils.HTML_ANALYTICS_FILE, "w") as f:
         f.write("Loading...")
     with open(utils.UPDATE_FLAG_FILE, "w") as f:
         f.write("")
-
     server = http.server.ThreadingHTTPServer(
         (utils.LOCALWEB_HOST, utils.LOCALWEB_PORT),
-        quietServer,
+        SimpleHTTPRequestHandlerNoLogs,
     )
-    ANALYTICS_ADDRESS = f"http://{utils.LOCALWEB_HOST}:{utils.LOCALWEB_PORT}"
-    logging.info(f"Starting WebServer thread ({ANALYTICS_ADDRESS})")
-    threading.Thread(target = server.serve_forever, daemon=True).start()
+    threading.Thread(target=server.serve_forever, daemon=True).start()
 
     folders_processed = set()
     tables_created = list()
@@ -121,10 +122,15 @@ def run_analytics():
                         data_table_stock_latest += "</tr>"
 
                     # Pie chart
-                    array_data_stock = json.dumps([["Symbol", "Buy", "Sell"]] + list(utils.get_piechart_data_stock(
-                        conn,
-                        DUCKDB_STOCK_TABLE,
-                    ).fetchall()))
+                    array_data_stock = json.dumps(
+                        [["Symbol", "Buy", "Sell"]]
+                        + list(
+                            utils.get_piechart_data_stock(
+                                conn,
+                                DUCKDB_STOCK_TABLE,
+                            ).fetchall()
+                        )
+                    )
 
                 else:
                     data_table_stock = ""
@@ -181,10 +187,28 @@ def run_analytics():
                         data_table_purchase_latest += "</tr>"
 
                     # Pie chart
-                    array_data_store = json.dumps([["Store", "sku_0", "sku_1", "sku_2", "sku_3", "sku_4", "sku_5", "sku_6", "sku_7", "sku_8"]] + list(utils.get_piechart_data_store(
-                        conn,
-                        DUCKDB_PURCHASE_TABLE,
-                    ).fetchall()))
+                    array_data_store = json.dumps(
+                        [
+                            [
+                                "Store",
+                                "sku_0",
+                                "sku_1",
+                                "sku_2",
+                                "sku_3",
+                                "sku_4",
+                                "sku_5",
+                                "sku_6",
+                                "sku_7",
+                                "sku_8",
+                            ]
+                        ]
+                        + list(
+                            utils.get_piechart_data_store(
+                                conn,
+                                DUCKDB_PURCHASE_TABLE,
+                            ).fetchall()
+                        )
+                    )
 
                 else:
                     data_table_purchase = ""

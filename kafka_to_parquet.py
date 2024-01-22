@@ -89,7 +89,7 @@ def main(args):
 
                         else:
                             topic = msg.topic()
-  
+
                             # Avro deserialise the message
                             value = msg.value()
                             deserialised_record = avro_deserializer(
