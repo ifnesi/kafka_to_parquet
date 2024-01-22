@@ -10,6 +10,8 @@ HTML_TEMPLATE_ANALYTICS = os.path.join("templates", "analytics_template.html")
 HTML_ANALYTICS_FILE = "index.html"
 FOLDER_CONFIG = "config"
 DUCKDB_DATA_FOLDER = "data"
+DUCKDB_DATA_FOLDER_BASE = "database_"
+DUCKDB_DATA_FOLDER_PATTERN = os.path.join(DUCKDB_DATA_FOLDER, f"{DUCKDB_DATA_FOLDER_BASE}*", "*.parquet")
 UPDATE_FLAG_FILE = os.path.join(DUCKDB_DATA_FOLDER, ".flag")
 LOCALWEB_HOST = "localhost"
 LOCALWEB_PORT = 8888
@@ -65,6 +67,10 @@ def empty_table(conn, table_name):
     conn.sql(f"""DELETE FROM '{table_name}';""")
 
 
+def count_table(conn, table_name):
+    return conn.sql(f"""SELECT COUNT(*) FROM '{table_name}';""")
+
+
 def insert_and_export(
     conn, folder, num_records, schema_field_names, records, chunks=25
 ):
@@ -79,7 +85,7 @@ def insert_and_export(
             )
 
     # Exporting to Parquet
-    file_name = f"database_{int(time.time())}"
+    file_name = f"{DUCKDB_DATA_FOLDER_BASE}{int(time.time())}"
     full_file_name = os.path.join(folder, file_name)
     logging.info(f"Exporting data to: {full_file_name}...")
     conn.sql(
