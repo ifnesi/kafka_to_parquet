@@ -4,9 +4,10 @@
 *.pyc
 __pycache__/
 data/database_*
+data/.flag
 !data/
 config/*
 !config/example.ini
 !config/localhost.ini
-analytics.html
+index.html
 notes.txt

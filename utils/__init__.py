@@ -7,9 +7,12 @@ from jinja2 import Template
 
 # Global Variables
 HTML_TEMPLATE_ANALYTICS = os.path.join("templates", "analytics_template.html")
-HTML_ANALYTICS_FILE = "analytics.html"
+HTML_ANALYTICS_FILE = "index.html"
 FOLDER_CONFIG = "config"
 DUCKDB_DATA_FOLDER = "data"
+UPDATE_FLAG_FILE = os.path.join(DUCKDB_DATA_FOLDER, ".flag")
+LOCALWEB_HOST = "localhost"
+LOCALWEB_PORT = 8888
 FIELD_TYPE_MAPPING = {
     "boolean": "BOOLEAN",
     "int": "INTEGER",
@@ -26,6 +29,8 @@ def create_html_file(template, file_name, context):
         jinja_template = Template(f.read())
     with open(file_name, "w") as f:
         f.write(jinja_template.render(**context))
+    with open(UPDATE_FLAG_FILE, "w") as f:
+        f.write(f"{time.time()}")
 
 
 def map_field(field_type):

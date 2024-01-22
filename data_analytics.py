@@ -5,7 +5,9 @@ import glob
 import time
 import duckdb
 import logging
+import threading
 import webbrowser
+import http.server
 
 import utils
 
@@ -16,7 +18,25 @@ DUCKDB_STOCK_TABLE = "stock_trade"
 DUCKDB_PURCHASE_TABLE = "purchase"
 
 
+class quietServer(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass
+
 def run_analytics():
+    # Start local web server
+    with open(utils.HTML_ANALYTICS_FILE, "w") as f:
+        f.write("Loading...")
+    with open(utils.UPDATE_FLAG_FILE, "w") as f:
+        f.write("")
+
+    server = http.server.ThreadingHTTPServer(
+        (utils.LOCALWEB_HOST, utils.LOCALWEB_PORT),
+        quietServer,
+    )
+    ANALYTICS_ADDRESS = f"http://{utils.LOCALWEB_HOST}:{utils.LOCALWEB_PORT}"
+    logging.info(f"Starting WebServer thread ({ANALYTICS_ADDRESS})")
+    threading.Thread(target = server.serve_forever, daemon=True).start()
+
     folders_processed = set()
     tables_created = list()
     table_print = False
@@ -186,10 +206,10 @@ def run_analytics():
 
                 table_print = False
                 html_file = f"file://{ROOT_FOLDER}/{utils.HTML_ANALYTICS_FILE}"
-                logging.info(f"Table ready at: {html_file}")
+                logging.info(f"Analytics ready at: {html_file}")
 
                 if not file_open:
-                    webbrowser.open(html_file)
+                    webbrowser.open(ANALYTICS_ADDRESS)
                     file_open = True
 
             time.sleep(0.5)
